@@ -1,7 +1,9 @@
-// AirTag Scanner by Matthew KuKanich
+// AirTag Scanner on ESP32 Cheap Yellow Display
+// https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display/
 // https://github.com/MatthewKuKanich/ESP32-AirTag-Scanner
 // https://github.com/MatthewKuKanich/FindMyFlipper
 
+#include <TFT_eSPI.h>
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
@@ -9,10 +11,12 @@
 #include <BLEAdvertisedDevice.h>
 #include <set>
 
+TFT_eSPI tft = TFT_eSPI();
 int scanTime = 1;
 BLEScan* pBLEScan;
 std::set<String> foundDevices;
 unsigned int airTagCount = 0;
+int yPosition = 30; // Starting y position for the first AirTag display
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
@@ -56,14 +60,37 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
             Serial.printf("%02X ", payLoad[i]);
           }
           Serial.println("\n");
+
+          // Print to display
+          tft.setTextColor(TFT_WHITE, TFT_BLACK);
+          tft.setCursor(5, yPosition);
+          tft.printf("Tag %d: %s, RSSI: %d dBm", airTagCount, macAddress.c_str(), rssi);
+          yPosition += 10; // Move to the next line for the next AirTag
+          // Print payload data
+          tft.setCursor(5, yPosition);
+          tft.print("PAYLOAD: ");
+          tft.setTextColor(TFT_BLUE, TFT_BLACK);
+          tft.setTextFont(1);
+          for (size_t i = 0; i < payLoadLength; i++) {
+            tft.printf("%02X ", payLoad[i]);
+          }
+          yPosition += 20; // Move to the next line for the next AirTag
         }
       }
     }
 };
 
 void setup() {
+  tft.init();
+  tft.setRotation(1); //This is the display in landscape
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
   Serial.begin(115200);
   Serial.println("Scanning for AirTags...");
+  int x = 5;
+  int y = 10;
+  int fontNum = 2; 
+  tft.drawString("Scanning for AirTags...", x, y, fontNum); // Left Aligned
 
   BLEDevice::init("");
   pBLEScan = BLEDevice::getScan();

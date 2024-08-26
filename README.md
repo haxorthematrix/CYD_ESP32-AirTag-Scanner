@@ -17,8 +17,9 @@ This project allows for full Cheap Yellow Display (CYD) scanning AirTag MAC addr
 2. Move these files to your Flipper Zero's SD card, specifically into the `apps_data/esp_flasher/` directory. For better organization, you can create a new folder within `esp_flasher` named `airtag`.
 
 ### Flashing the Firmware
-1. Connect your ESP32-WROOM or ESP32-S3 to your computer and enter bootloader mode. To do this:
-   - Hold down the **Boot** button.
+1. Connect your CYD-ESP32 or ESP32-S3 to your computer and enter bootloader mode. To do this:
+   - You can then select basically any ESP32 board in the boards menu. (I usually use "ESP32 Dev Module", but it doesn't really matter)
+   - If you see errors uploading a sketch, try setting board upload speed to 115200
    - Press the **Reset** button once.
    - Release the **Boot** button.
 2. On your Flipper Zero, navigate to the ESP Flasher app located in `Apps` > `GPIO`.

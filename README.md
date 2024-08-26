@@ -1,7 +1,7 @@
-# ESP32-AirTag-Scanner
+# CYD-ESP32-AirTag-Scanner
 
 ## Overview
-This project allows for scanning AirTag MAC addresses and payloads without the need for an Android device or the nrfConnect app.
+This project allows for full Cheap Yellow Display (CYD) scanning AirTag MAC addresses and payloads without the need for an Android device or the nrfConnect app. HAXXX
 
 ## Requirements
 - ESP32-WROOM or ESP32-S3 module

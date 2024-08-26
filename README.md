@@ -3,6 +3,13 @@
 ## Overview
 This project allows for full Cheap Yellow Display (CYD) scanning AirTag MAC addresses and payloads without the need for an Android device or the nrfConnect app. ChatGPT wrote this: "This project is an advanced Bluetooth Low Energy (BLE) tracker detection system that runs on an ESP32, capable of identifying and logging the presence of Apple AirTags, Samsung SmartTags, and Tile Trackers. The system uses the ESP32’s BLE capabilities to scan for specific advertising patterns unique to these devices and displays the information on a connected TFT display." HAXXX
 
+## The CYD has the following features:
+- ESP32 (With Wifi and Bluetooth)
+- 320 x 240 LCD Display (2.8")
+- Touch Screen (Resistive)
+- USB for powering and programming
+- SD Card Slot, LED and some additional pins broken out
+
 ## Requirements
 - 1 Cheap Yellow Display (If you need to buy one see https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display for links)
 - "TFT_eSPI" library installed.
@@ -10,29 +17,12 @@ This project allows for full Cheap Yellow Display (CYD) scanning AirTag MAC addr
 
 ## Instructions
 
-### Preparing the Firmware Files
-1. Locate the following firmware files:
-   - `airtag_scanner.ino.bootloader.bin`
-   - `airtag_scanner.ino.partitions.bin`
-   - `airtag_scanner.ino.bin`
-2. Move these files to your Flipper Zero's SD card, specifically into the `apps_data/esp_flasher/` directory. For better organization, you can create a new folder within `esp_flasher` named `airtag`.
-
 ### Flashing the Firmware
-1. Connect your CYD-ESP32 or ESP32-S3 to your computer and enter bootloader mode. To do this:
-   - You can then select basically any ESP32 board in the boards menu. (I usually use "ESP32 Dev Module", but it doesn't really matter)
-   - If you see errors uploading a sketch, try setting board upload speed to 115200
-   - Press the **Reset** button once.
-   - Release the **Boot** button.
-2. On your Flipper Zero, navigate to the ESP Flasher app located in `Apps` > `GPIO`.
-3. Select `Manual Flash`.
-4. If you are using an ESP32-S3, select `Select if using S3`.
-5. Proceed to flash the firmware files in the following order:
-   - Click on `bootloader` and select the `airtag_scanner.ino.bootloader.bin` file.
-   - Click on `Part Table` and select the `airtag_scanner.ino.partitions.bin` file.
-   - Click on `FirmwareA` and select the `airtag_scanner.ino.bin` file.
-6. Leave all other options at their default settings and click `FLASH`.
-7. Wait for the flashing process to complete.
+1. Connect your CYD-ESP32 to your computer
+2. The CYD uses the CH340 USB to UART chip. If you do not have a driver already installed for this chip you may need to install one. Check out [Sparkfun's guide for installation instruction](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers/all)
+3. You will need to have the ESP32 setup for your Arduino IDE, [instructions can be found here](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html).
+4. You can then select basically any ESP32 board in the boards menu. (I usually use "ESP32 Dev Module", but it doesn't really matter) If you see errors uploading a sketch, try setting board upload speed to `115200`
+5. Wait for the flashing process to complete.
 
 ### Using the Scanner
-1. Once flashing is complete, open the UART Terminal app on your Flipper Zero.
-2. Press the reset button on your ESP32 module. The device should start scanning for AirTags and display information such as MAC addresses and payloads.
+1. Once flashing is complete, the device should reboot and start scanning for AirTags and display information such as MAC addresses and payloads.

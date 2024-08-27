@@ -5,6 +5,8 @@
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
 #include <set>
+#include <SD.h>
+#include <SPI.h>
 
 TFT_eSPI tft = TFT_eSPI();
 int scanTime = 1;
@@ -17,29 +19,42 @@ int yPosition = 30; // Starting y position for the first AirTag display
 void printWithSpacing(TFT_eSPI &tft, const String &text, int x, int &y, int maxWidth) {
     int lineHeight = tft.fontHeight();  // Get the current font height
     int cursorX = x;
-    String line = "";
 
+    tft.setCursor(cursorX, y);  // Set the initial cursor position
     for (int i = 0; i < text.length(); i++) {
         char c = text[i];
         int cWidth = tft.textWidth(String(c));  // Get the width of the current character
 
         if (cursorX + cWidth > maxWidth) {
-            // If adding this character would exceed the maxWidth, print the line and start a new one
-            tft.drawString(line, x, y);
-            y += lineHeight + 5; // Move down by the height of the text plus 5 pixels
-            line = "";
-            cursorX = x;
+            // If adding this character would exceed the maxWidth, start a new line
+            y += lineHeight + 5;  // Move down by the height of the text plus 5 pixels
+            cursorX = x;  // Reset cursorX to the starting x position
+            tft.setCursor(cursorX, y);  // Move cursor to the new line position
         }
 
-        line += c;
-        cursorX += cWidth;
+        tft.print(c);  // Print the character
+        cursorX += cWidth;  // Update the cursorX position
     }
 
-    // Print any remaining text in the last line
-    if (line.length() > 0) {
-        tft.drawString(line, x, y);
-        y += lineHeight + 5; // Move down after the last line
-    }
+    // After printing all characters, update the y position
+    y += lineHeight + 5;
+}
+
+void drawAirTagCounter(TFT_eSPI &tft, int airTagCount) {
+    int xCenter = tft.width() - 20; // Adjust as necessary for your screen size
+    int yCenter = 20;
+    int radius = 15;
+
+    // Draw the circle
+    tft.fillCircle(xCenter, yCenter, radius, TFT_YELLOW); // Circle with yellow color
+
+    // Set the text properties
+    tft.setTextColor(TFT_BLACK, TFT_YELLOW); // Black text with yellow background
+    tft.setTextFont(2); // Set font size
+    tft.setTextDatum(MC_DATUM); // Middle Center text alignment
+
+    // Convert airTagCount to String and draw it inside the circle
+    tft.drawString(String(airTagCount), xCenter, yCenter);
 }
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
@@ -88,18 +103,51 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
           // Print to display
           int maxWidth = tft.width() - 10; // Define your maximum width based on the screen size
           
-          // Set color for title and print "Tag X"
-          tft.setTextColor(TFT_WHITE, TFT_BLACK);
-          tft.setTextFont(2); // Larger font for title
-          printWithSpacing(tft, "Tag " + String(airTagCount) + ": ", 5, yPosition, maxWidth);
+          // Save the tag info to SD card
+                if (SD.exists("Tag_Info.txt")) {
+                    File dataFile = SD.open("Tag_Info.txt", FILE_WRITE);
+                    if (dataFile) {
+                        dataFile.print("Tag ");
+                        dataFile.print(airTagCount);
+                        dataFile.print(": ");
+                        dataFile.print(macAddress);
+                        dataFile.print(", RSSI: ");
+                        dataFile.print(rssi);
+                        dataFile.println(" dBm");
+                        dataFile.close();
+                    } else {
+                        Serial.println("Failed to open Tag_Info.txt for writing.");
+                    }
+                } else {
+                    File dataFile = SD.open("Tag_Info.txt", FILE_WRITE);
+                    if (dataFile) {
+                        dataFile.println("Tag Information Log");
+                        dataFile.print("Tag ");
+                        dataFile.print(airTagCount);
+                        dataFile.print(": ");
+                        dataFile.print(macAddress);
+                        dataFile.print(", RSSI: ");
+                        dataFile.print(rssi);
+                        dataFile.println(" dBm");
+                        dataFile.close();
+                    } else {
+                        Serial.println("Failed to create Tag_Info.txt.");
+                    }
+                }
+          // Print Tag number in white
+            tft.setTextColor(TFT_WHITE, TFT_BLACK);
+            tft.setCursor(5, yPosition);  // Set the cursor at the start of the line
+            tft.print("Tag " + String(airTagCount) + ": ");
 
-          // Set color for tag data and print MAC address and RSSI
-          tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-          printWithSpacing(tft, macAddress + ", RSSI: " + String(rssi) + " dBm", 5, yPosition, maxWidth);
+            // Print tag information in yellow on the same line
+            tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+            tft.print(macAddress + ", RSSI: " + String(rssi) + " dBm");
+
+            yPosition += tft.fontHeight() + 5;  // Move yPosition for the next line
 
           // Set color for title and print "Payload"
           tft.setTextColor(TFT_WHITE, TFT_BLACK);
-          tft.setTextFont(2); // Larger font for title
+          tft.setTextFont(1); // Larger font for title
           printWithSpacing(tft, "PAYLOAD: ", 5, yPosition, maxWidth);
 
           // Set color for payload data and print payload
@@ -125,6 +173,13 @@ void setup() {
   int y = 10;
   int fontNum = 2; 
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  
+  // Initialize SD card
+  if (!SD.begin()) {
+    Serial.println("SD Card not found or initialization failed!");
+  } else {
+    Serial.println("SD Card initialized.");
+  }
   tft.drawString("Scanning for AirTags...", x, y, fontNum); // Left Aligned
 
   BLEDevice::init("");
@@ -154,5 +209,7 @@ void loop() {
 
   BLEScanResults foundDevicesScan = pBLEScan->start(scanTime, false);
   pBLEScan->clearResults();
+  // Update the AirTag counter on the screen
+  drawAirTagCounter(tft, airTagCount);
   delay(50);
 }

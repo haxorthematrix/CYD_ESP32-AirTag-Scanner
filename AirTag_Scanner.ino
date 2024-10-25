@@ -14,6 +14,7 @@ BLEScan* pBLEScan;
 std::set<String> foundDevices;
 unsigned int airTagCount = 0;
 int yPosition = 30; // Starting y position for the first AirTag display
+String tagstatus = "";
 
 void drawAirTagCounter(TFT_eSPI &tft, int airTagCount) {
     int xCenter = tft.width() - 20; // Adjust as necessary for your screen size
@@ -41,12 +42,17 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         // searches both "1E FF 4C 00" and "4C 00 12 19" as the payload can differ slightly
         bool patternFound = false;
         for (int i = 0; i <= payLoadLength - 4; i++) {
-            if (payLoad[i] == 0x1E && payLoad[i+1] == 0xFF && payLoad[i+2] == 0x4C && payLoad[i+3] == 0x00) {
+            // if (payLoad[i] == 0x1E && payLoad[i+1] == 0xFF && payLoad[i+2] == 0x4C && payLoad[i+3] == 0x00) {
+            //    patternFound = true;
+            //    break;
+            //}
+                        if (payLoad[i] == 0x4C && payLoad[i+1] == 0x00 && payLoad[i+2] == 0x07 && payLoad[i+3] == 0x19) {
                 patternFound = true;
+                tagstatus = "Registered ";
                 break;
-            }
-            if (payLoad[i] == 0x4C && payLoad[i+1] == 0x00 && payLoad[i+2] == 0x12 && payLoad[i+3] == 0x19) {
+            }           if (payLoad[i] == 0x4C && payLoad[i+1] == 0x00 && payLoad[i+2] == 0x12 && payLoad[i+3] == 0x19) {
                 patternFound = true;
+                tagstatus = "Unregistered ";
                 break;
             }
         }
@@ -62,6 +68,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
                 int rssi = advertisedDevice.getRSSI();
                 
                 // Print information to Serial Out
+                Serial.print(tagstatus);
                 Serial.println("AirTag found!");
                 Serial.print("Tag: ");
                 Serial.println(airTagCount);
@@ -86,6 +93,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
                 }
 
                 if (dataFile) {
+                    dataFile.print(tagstatus);
                     dataFile.print("Tag ");
                     dataFile.print(airTagCount);
                     dataFile.print(": ");
@@ -102,7 +110,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
                 // Print Tag number in white
                 tft.setTextFont(1);
                 tft.setTextColor(TFT_WHITE, TFT_BLACK);
-                tft.print("Tag " + String(airTagCount) + ": ");
+                tft.print(String(tagstatus) + "Tag " + String(airTagCount) + ": ");
 
                 // Print tag information in yellow on the same line
                 tft.setTextColor(TFT_YELLOW, TFT_BLACK);
